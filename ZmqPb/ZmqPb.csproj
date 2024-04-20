@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ZmqPb</RootNamespace>
+    <AssemblyName>ZmqPb</AssemblyName>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyTitle>ZmqPb</AssemblyTitle>
+    <Product>ZmqPb</Product>
+    <Description>A Helper Library For ZeroMQ and Protobuf</Description>
+    <Copyright>Copyright © SFGrenade 2024</Copyright>
+    <PathMap>$(MSBuildProjectDirectory)=source</PathMap>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <OutputPath>bin/$(Configuration)/</OutputPath>
+    <LangVersion>latest</LangVersion>
+    <DocumentationFile>$(OutputPath)/$(AssemblyTitle).xml</DocumentationFile>
+    <ProtoBufToolsVersion>3.26.1</ProtoBufToolsVersion>
+    <ProtoBufToolsOS Condition="$([MSBuild]::IsOSPlatform('Linux'))">linux</ProtoBufToolsOS>
+    <ProtoBufToolsOS Condition="$([MSBuild]::IsOSPlatform('OSX'))">macosx</ProtoBufToolsOS>
+    <ProtoBufToolsOS Condition="$([MSBuild]::IsOSPlatform('Windows'))">windows</ProtoBufToolsOS>
+    <ProtoBufTools64 Condition="'$(Platform)'!='x86'">x64</ProtoBufTools64>
+    <ProtoBufTools64 Condition="'$(Platform)'=='x86'">x86</ProtoBufTools64>
+  </PropertyGroup>
+  <Import Project="LocalOverrides.targets" Condition="Exists('LocalOverrides.targets')" />
+  <Target Name="BuildProto" AfterTargets="PreBuildEvent">
+    <RemoveDir Condition="Exists('$(ProjectDir)/buildProto/')" Directories="$(ProjectDir)/buildProto/" />
+    <MakeDir Directories="$(ProjectDir)/buildProto/" />
+    <Exec WorkingDirectory="./" Command="$(NugetPackageRoot)/google.protobuf.tools/$(ProtoBufToolsVersion)/tools/$(ProtoBufToolsOS)_$(ProtoBufTools64)/protoc.exe -I=&quot;$(ProjectDir)/protos/&quot; --csharp_out=&quot;$(ProjectDir)/Messages/&quot; &quot;$(ProjectDir)/protos/*.proto&quot;" />
+  </Target>
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="$(ProtoBufToolsVersion)" />
+    <PackageReference Include="Google.Protobuf.Tools" Version="$(ProtoBufToolsVersion)" />
+    <PackageReference Include="ZeroMQ" Version="4.1.0.31" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Messages\" />
+    <Folder Include="protos\" />
+  </ItemGroup>
+</Project>

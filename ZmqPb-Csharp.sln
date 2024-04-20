@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZmqPb", "ZmqPb\ZmqPb.csproj", "{FF8431C3-9923-4705-9909-897714EEA345}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "example\Example.csproj", "{5B90FCFD-9679-4CC4-B009-5EF5502DDA40}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FF8431C3-9923-4705-9909-897714EEA345}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF8431C3-9923-4705-9909-897714EEA345}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF8431C3-9923-4705-9909-897714EEA345}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF8431C3-9923-4705-9909-897714EEA345}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B90FCFD-9679-4CC4-B009-5EF5502DDA40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B90FCFD-9679-4CC4-B009-5EF5502DDA40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B90FCFD-9679-4CC4-B009-5EF5502DDA40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B90FCFD-9679-4CC4-B009-5EF5502DDA40}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

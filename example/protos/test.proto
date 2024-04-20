@@ -1,0 +1,18 @@
+﻿syntax = "proto3";
+
+package SFG.Test;
+option csharp_namespace = "SFG.Test";
+
+message EmptyAnswer {
+  bool success = 1;
+}
+
+message Message {
+  string woah = 1;
+  string content = 2;
+}
+
+message OtherMessage {
+  string something = 1;
+  string else = 2;
+}

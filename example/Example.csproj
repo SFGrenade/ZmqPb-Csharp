@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ZmqPb_Example</RootNamespace>
+    <AssemblyName>ZmqPb_Example</AssemblyName>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyTitle>ZmqPb_Example</AssemblyTitle>
+    <Product>ZmqPb_Example</Product>
+    <Description>An Example</Description>
+    <Copyright>Copyright © SFGrenade 2024</Copyright>
+    <PathMap>$(MSBuildProjectDirectory)=source</PathMap>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <OutputPath>bin/$(Configuration)/</OutputPath>
+    <LangVersion>latest</LangVersion>
+    <ProtoBufToolsVersion>3.26.1</ProtoBufToolsVersion>
+    <ProtoBufToolsOS Condition="$([MSBuild]::IsOSPlatform('Linux'))">linux</ProtoBufToolsOS>
+    <ProtoBufToolsOS Condition="$([MSBuild]::IsOSPlatform('OSX'))">macosx</ProtoBufToolsOS>
+    <ProtoBufToolsOS Condition="$([MSBuild]::IsOSPlatform('Windows'))">windows</ProtoBufToolsOS>
+    <ProtoBufTools64 Condition="'$(Platform)'!='x86'">x64</ProtoBufTools64>
+    <ProtoBufTools64 Condition="'$(Platform)'=='x86'">x86</ProtoBufTools64>
+  </PropertyGroup>
+  <Target Name="BuildProto" AfterTargets="PreBuildEvent">
+    <RemoveDir Condition="Exists('$(ProjectDir)/Messages/')" Directories="$(ProjectDir)/Messages/" />
+    <MakeDir Directories="$(ProjectDir)/Messages/" />
+    <Exec WorkingDirectory="./" Command="$(NugetPackageRoot)/google.protobuf.tools/$(ProtoBufToolsVersion)/tools/$(ProtoBufToolsOS)_$(ProtoBufTools64)/protoc.exe -I=&quot;$(ProjectDir)/protos/&quot; --csharp_out=&quot;$(ProjectDir)/Messages/&quot; &quot;$(ProjectDir)/protos/*.proto&quot;" />
+  </Target>
+  <ItemGroup>
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- in this case, it's the csproj next door, otherwise this would be a reference like the one in the readme -->
+    <ProjectReference Include="../ZmqPb/ZmqPb.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="$(ProtoBufToolsVersion)" />
+    <PackageReference Include="Google.Protobuf.Tools" Version="$(ProtoBufToolsVersion)" />
+    <PackageReference Include="ZeroMQ" Version="4.1.0.31" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Messages\" />
+    <Folder Include="protos\" />
+  </ItemGroup>
+</Project>
