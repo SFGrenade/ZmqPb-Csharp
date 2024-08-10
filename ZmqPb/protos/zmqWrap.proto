@@ -1,9 +1,0 @@
-﻿syntax = "proto3";
-
-package ZmqPb.Proto;
-option csharp_namespace = "ZmqPb.Proto";
-
-message Wrapper {
-  string protoName = 1;
-  bytes protoContent = 2;
-}

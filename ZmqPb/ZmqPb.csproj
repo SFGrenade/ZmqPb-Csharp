@@ -21,18 +21,9 @@
     <ProtoBufTools64 Condition="'$(Platform)'=='x86'">x86</ProtoBufTools64>
   </PropertyGroup>
   <Import Project="LocalOverrides.targets" Condition="Exists('LocalOverrides.targets')" />
-  <Target Name="BuildProto" AfterTargets="PreBuildEvent">
-    <RemoveDir Condition="Exists('$(ProjectDir)/buildProto/')" Directories="$(ProjectDir)/buildProto/" />
-    <MakeDir Directories="$(ProjectDir)/buildProto/" />
-    <Exec WorkingDirectory="./" Command="$(NugetPackageRoot)/google.protobuf.tools/$(ProtoBufToolsVersion)/tools/$(ProtoBufToolsOS)_$(ProtoBufTools64)/protoc.exe -I=&quot;$(ProjectDir)/protos/&quot; --csharp_out=&quot;$(ProjectDir)/Messages/&quot; &quot;$(ProjectDir)/protos/*.proto&quot;" />
-  </Target>
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="$(ProtoBufToolsVersion)" />
     <PackageReference Include="Google.Protobuf.Tools" Version="$(ProtoBufToolsVersion)" />
     <PackageReference Include="ZeroMQ" Version="4.1.0.31" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Messages\" />
-    <Folder Include="protos\" />
   </ItemGroup>
 </Project>

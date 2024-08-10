@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Linq;
+using System.IO;
 using Google.Protobuf;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using ZeroMQ;
 
 namespace ZmqPb;
@@ -7,13 +11,13 @@ namespace ZmqPb;
 public class Subscription
 {
     public IMessage message { get; set; } = null;
-    public System.Action<IMessage> callback { get; set; } = null;
+    public Action<IMessage> callback { get; set; } = null;
 
     public Subscription()
     {
     }
 
-    public Subscription(IMessage message, System.Action<IMessage> callback)
+    public Subscription(IMessage message, Action<IMessage> callback)
     {
         this.message = message;
         this.callback = callback;
@@ -28,8 +32,8 @@ public abstract class ZmqWrap
     protected ZContext zmqContext_ = null;
     protected ZSocket zmqSocket_ = null;
 
-    protected System.Collections.Concurrent.ConcurrentQueue<ZMessage> queueToSend_ = new();
-    protected System.Collections.Generic.Dictionary<string, Subscription> subscribedMessages_ = new();
+    protected ConcurrentQueue<KeyValuePair<string, string>> queueToSend_ = new();
+    protected Dictionary<string, Subscription> subscribedMessages_ = new();
 
     public ZmqWrap(string host, ZSocketType socketType, ZContext zmqContext = null)
     {
@@ -43,7 +47,7 @@ public abstract class ZmqWrap
     {
         while (!queueToSend_.IsEmpty)
         {
-            queueToSend_.TryDequeue(out ZMessage tmp);
+            queueToSend_.TryDequeue(out KeyValuePair<string, string> tmp);
         }
 
         subscribedMessages_.Clear();
@@ -54,7 +58,7 @@ public abstract class ZmqWrap
         }
     }
 
-    public void Subscribe(IMessage message, System.Action<IMessage> callback)
+    public void Subscribe(IMessage message, Action<IMessage> callback)
     {
         string messageType = message.Descriptor.FullName;
         if (subscribedMessages_.ContainsKey(messageType))
@@ -67,22 +71,37 @@ public abstract class ZmqWrap
         }
     }
 
+    private static byte[] ConvertToByteArray(string input)
+    {
+        return input.Select(Convert.ToByte).ToArray();
+    }
+
+    private static string ConvertToString(byte[] bytes)
+    {
+        return new string(bytes.Select(Convert.ToChar).ToArray());
+    }
+
     public virtual void SendMessage(IMessage message)
     {
-        Proto.Wrapper wrappedMessage = new Proto.Wrapper();
-        wrappedMessage.ProtoName = message.Descriptor.FullName;
-        wrappedMessage.ProtoContent = message.ToByteString();
-        ZMessage newMessage = new ZMessage(new[] { new ZFrame(wrappedMessage.ToByteArray()) });
-        queueToSend_.Enqueue(newMessage);
+        byte[] myBuffer;
+        using (MemoryStream stream = new MemoryStream())
+        {
+            message.WriteTo(stream);
+            myBuffer = stream.ToArray();
+        }
+
+        queueToSend_.Enqueue(new KeyValuePair<string, string>(message.Descriptor.FullName, ConvertToString(myBuffer)));
     }
 
     public virtual void Run()
     {
         if (CanSend() && !queueToSend_.IsEmpty)
         {
-            queueToSend_.TryPeek(out ZMessage msgToSend);
-            zmqSocket_.SendMessage(msgToSend, ZSocketFlags.DontWait, out ZError sendResult);
-            if (Equals(sendResult, ZError.None))
+            queueToSend_.TryPeek(out KeyValuePair<string, string> msgToSend);
+            zmqSocket_.SendMessage(new ZMessage(new[] { new ZFrame(ConvertToByteArray(msgToSend.Key)) }), ZSocketFlags.DontWait, out ZError sendResultPartOne);
+            zmqSocket_.SendMessage(new ZMessage(new[] { new ZFrame(ConvertToByteArray(msgToSend.Value)) }), ZSocketFlags.DontWait,
+                out ZError sendResultPartTwo);
+            if (Equals(sendResultPartOne, ZError.None) && Equals(sendResultPartTwo, ZError.None))
             {
                 DidSend();
                 queueToSend_.TryDequeue(out msgToSend);
@@ -93,20 +112,21 @@ public abstract class ZmqWrap
         }
         else if (CanRecv())
         {
-            ZMessage receivedReply = zmqSocket_.ReceiveMessage(ZSocketFlags.DontWait, out ZError recvResult);
-            if (Equals(recvResult, ZError.None))
+            ZMessage receivedReplyPartOne = zmqSocket_.ReceiveMessage(ZSocketFlags.DontWait, out ZError recvResultPartOne);
+            ZMessage receivedReplyPartTwo = zmqSocket_.ReceiveMessage(ZSocketFlags.DontWait, out ZError recvResultPartTwo);
+            if (Equals(recvResultPartOne, ZError.None) && Equals(recvResultPartTwo, ZError.None))
             {
                 DidRecv();
-                Proto.Wrapper receivedWrapper = Proto.Wrapper.Parser.ParseFrom(receivedReply.Pop());
-                if (subscribedMessages_.ContainsKey(receivedWrapper.ProtoName))
+                string messageType = ConvertToString(receivedReplyPartOne.Pop().Read());
+                if (subscribedMessages_.ContainsKey(messageType))
                 {
-                    subscribedMessages_[receivedWrapper.ProtoName].message = subscribedMessages_[receivedWrapper.ProtoName].message.Descriptor.Parser
-                        .ParseFrom(receivedWrapper.ProtoContent);
-                    subscribedMessages_[receivedWrapper.ProtoName].callback(subscribedMessages_[receivedWrapper.ProtoName].message);
+                    subscribedMessages_[messageType].message = subscribedMessages_[messageType].message.Descriptor.Parser
+                        .ParseFrom(receivedReplyPartTwo.Pop());
+                    subscribedMessages_[messageType].callback(subscribedMessages_[messageType].message);
                 }
                 else
                 {
-                    throw new FormatException("Topic '" + receivedWrapper.ProtoName + "' not subscribed!");
+                    throw new FormatException("Topic '" + messageType + "' not subscribed!");
                 }
             }
             else

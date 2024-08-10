@@ -11,12 +11,12 @@ public class ReqRep : ZmqWrap
     }
 
     private bool isServer_ = false;
-    private ReqRep.Status status_ = ReqRep.Status.Receiving;
+    private Status status_ = Status.Receiving;
 
     public ReqRep(string host, bool isServer, ZContext zmqContext = null) : base(host, isServer ? ZSocketType.REP : ZSocketType.REQ, zmqContext)
     {
         isServer_ = isServer;
-        status_ = isServer ? ReqRep.Status.Receiving : ReqRep.Status.Sending;
+        status_ = isServer ? Status.Receiving : Status.Sending;
         if (isServer_)
         {
             zmqSocket_.Bind(host_);
@@ -33,21 +33,21 @@ public class ReqRep : ZmqWrap
 
     protected override bool CanSend()
     {
-        return status_ == ReqRep.Status.Sending;
+        return status_ == Status.Sending;
     }
 
     protected override void DidSend()
     {
-        status_ = ReqRep.Status.Receiving;
+        status_ = Status.Receiving;
     }
 
     protected override bool CanRecv()
     {
-        return status_ == ReqRep.Status.Receiving;
+        return status_ == Status.Receiving;
     }
 
     protected override void DidRecv()
     {
-        status_ = ReqRep.Status.Sending;
+        status_ = Status.Sending;
     }
 }
